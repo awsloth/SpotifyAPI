@@ -559,7 +559,8 @@ def encode_client(client_inst: OAuth) -> str:
 
 @type_check
 def init(redirect_uri: str, client_id: str = None,
-         client_secret: str = None, scope: str = None) -> str:
+         client_secret: str = None, scope: str = None,
+         user: str = None, file_loc: str = None) -> str:
     """
     :arg redirect_uri: The uri to redirect the user to when
                        making the request (Required)
@@ -569,14 +570,52 @@ def init(redirect_uri: str, client_id: str = None,
                     search for SPOTIFY_SECRET in environment
                     variables (Optional)
     :arg scope: The scope for the request (Optional)
+    :arg user: For handling multiple users (Optional)
+    :arg file_loc: The location to hold the token file (Optional)
     :return str: The token needed to make requests
     Initialises the program so that requests can be made
     and gives the access token
     """
-    # Grab tokens from past run
-    with open("details.txt") as f:
-        contents = [line.rstrip() for line in f.readlines()]
-        access_token, refresh_token, time_left, verified_scope = contents
+    # Variable to track if the location is absolute
+    absolute = False
+    # Checks if the location is specified
+    if file_loc is not None:
+        # If the path specified is an absolute path, use it
+        # else get the current directory and add on the path
+        if not file_loc.startswith(os.getcwd())
+            file_location = f"{os.getcwd()}{file_loc}"
+        else:
+            absolute = True
+            file_location = f"{file_loc}"
+    else:
+        file_location = f"{os.getcwd()}"
+            
+    # Create file name string
+    file_name = f"\\{user if user is not None else ''}.cache"
+
+    # Get all files in file location
+    folders = os.listdir(file_location)
+    if "cache" in folders:
+        file_location += "//cache"
+        files = os.listdir(file_location)
+    else:
+        # If the path was absolute get the files in that directory
+        # else create and empty files list
+        if absolute:
+            files = os.listdir(file_location)
+        else:
+            files = []
+
+    # Inititalise new user to True
+    new_user = True
+
+    # If the file exists in the expected location go ahead
+    if file_name in files:
+        # Grab tokens from past run
+        with open(f"{file_location}{file_name}") as f:
+            contents = [line.rstrip() for line in f.readlines()]
+            access_token, refresh_token, time_left, verified_scope = contents
+        new_user = False
 
     # If the user didn't enter their id or secret
     # attempt to get it from the environment variables
@@ -595,8 +634,19 @@ def init(redirect_uri: str, client_id: str = None,
     # Create instance of OAuth class to handle OAuth
     client = OAuth(client_id, client_secret, redirect_uri, scope)
 
-    # If scope unsuitable or run out of time re-request tokens
-    if not time.time() - TIMEOUT_TIME < float(time_left):
+    # If scope unsuitable, run out of time or new user re-request tokens
+    if new_user:
+        # Grab the json from the api
+        response = client.first_run()
+
+        # Grab the tokens and scope from the api
+        access_token = response['access_token']
+        refresh_token = response['refresh_token']
+
+        # If there was an entered scope get it
+        if scope_St is not None:
+            scope = response['scope']
+    elif not time.time() - TIMEOUT_TIME < float(time_left):
         # Grab the json from the api
         response = client.grab_token_refresh(refresh_token)
 
@@ -611,7 +661,10 @@ def init(redirect_uri: str, client_id: str = None,
         # Grab the tokens and scope from the api
         access_token = response['access_token']
         refresh_token = response['refresh_token']
-        scope = response['scope']
+        
+        # If there was an entered scope get it
+        if scope_St is not None:
+            scope = response['scope']
 
     else:
         # Set scope as prior scope
@@ -619,7 +672,7 @@ def init(redirect_uri: str, client_id: str = None,
         scope = verified_scope
 
     # On exit, save all details
-    with open("details.txt", "w") as f:
+    with open(f"{file_location}{file_name}") as f:
         print(access_token, refresh_token, time.time(),
               scope, sep='\n', file=f)
 
