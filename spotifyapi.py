@@ -532,7 +532,21 @@ class APIreq:
                 params.update({arg_names[i]: args[i]})
 
         # Create the request and grab the returned json file
-        r = requests.get(url, params=params, headers=self.headers).json
+        r = requests.get(url, params=params, headers=self.headers).json()
+
+        return r
+
+    @type_check
+    def genres_rcommnd(self) -> dict:
+        """
+        :return dict: The dict containing the available genres
+        Gets the available genre seeds from the api
+        """
+        # Creates the url for the request
+        url = f"{self.base}recommendations/available-genre-seeds"
+
+        # Create the request and grab the returned json file
+        r = requests.get(url, headers=self.headers).json()
 
         return r
 
@@ -582,7 +596,7 @@ def init(redirect_uri: str, client_id: str = None,
     if file_loc is not None:
         # If the path specified is an absolute path, use it
         # else get the current directory and add on the path
-        if not file_loc.startswith(os.getcwd())
+        if not file_loc.startswith(os.getcwd()):
             file_location = f"{os.getcwd()}{file_loc}"
         else:
             absolute = True
@@ -644,15 +658,19 @@ def init(redirect_uri: str, client_id: str = None,
         refresh_token = response['refresh_token']
 
         # If there was an entered scope get it
-        if scope_St is not None:
+        if 'scope' in response:
             scope = response['scope']
+            
     elif not time.time() - TIMEOUT_TIME < float(time_left):
         # Grab the json from the api
         response = client.grab_token_refresh(refresh_token)
 
         # Grab the tokens and scope from the api
         access_token = response['access_token']
-        scope = response['scope']
+        
+        # If there was an entered scope get it
+        if 'scope' in response:
+            scope = response['scope']
 
     elif not scope_st.issubset(set(verified_scope.split())) and scope != "":
         # Grab the json from the api
@@ -663,7 +681,7 @@ def init(redirect_uri: str, client_id: str = None,
         refresh_token = response['refresh_token']
         
         # If there was an entered scope get it
-        if scope_St is not None:
+        if 'scope' in response:
             scope = response['scope']
 
     else:
@@ -672,7 +690,7 @@ def init(redirect_uri: str, client_id: str = None,
         scope = verified_scope
 
     # On exit, save all details
-    with open(f"{file_location}{file_name}") as f:
+    with open(f"{file_location}{file_name}", "w") as f:
         print(access_token, refresh_token, time.time(),
               scope, sep='\n', file=f)
 
