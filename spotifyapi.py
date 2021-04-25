@@ -610,7 +610,7 @@ def init(redirect_uri: str, client_id: str = None,
     # Get all files in file location
     folders = os.listdir(file_location)
     if "cache" in folders:
-        file_location += "//cache"
+        file_location += r"\cache"
         files = os.listdir(file_location)
     else:
         # If the path was absolute get the files in that directory
@@ -618,13 +618,14 @@ def init(redirect_uri: str, client_id: str = None,
         if absolute:
             files = os.listdir(file_location)
         else:
+            file_location += r"\cache"
             files = []
 
     # Inititalise new user to True
     new_user = True
 
     # If the file exists in the expected location go ahead
-    if file_name in files:
+    if file_name[1:] in files:
         # Grab tokens from past run
         with open(f"{file_location}{file_name}") as f:
             contents = [line.rstrip() for line in f.readlines()]
@@ -688,6 +689,9 @@ def init(redirect_uri: str, client_id: str = None,
         # Set scope as prior scope
         # so all available functions can be used
         scope = verified_scope
+
+    # Create directory if not already existant
+    os.makedirs(f"{file_location}", exist_ok=True)
 
     # On exit, save all details
     with open(f"{file_location}{file_name}", "w") as f:
