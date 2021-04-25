@@ -169,8 +169,10 @@ class OAuth:
         # Return tokens
         return r.json()
 
-    def first_run(self) -> dict:
+    def first_run(self, auto_open: bool = True) -> dict:
         """
+        :arg auto_open: determines whether the function prints the link
+                        or opens it using the webbrowser module (Optional)
         :return dict: The tokens received from running through the OAuth
         Performs the steps to authorise a session and returns the tokens
         """
@@ -178,7 +180,13 @@ class OAuth:
         # Show the user the Authorisation page to authorise application
         auth_url = self.grab_code()
         print("After redirect paste url here:")
-        webbrowser.open(auth_url)
+
+        # If the user turned auto open off print the link
+        if auto_open:
+            webbrowser.open(auth_url)
+        else:
+            print(auth_url)
+            
         auth_code = input()[len(self.redirect_uri)+6:]
 
         # Grab the tokens with the code given
@@ -186,7 +194,6 @@ class OAuth:
 
         # Return the tokens
         return tokens
-
 
 class APIreq:
     """
@@ -550,6 +557,27 @@ class APIreq:
 
         return r
 
+    @type_check
+    def get_tracks(self, id_list: list) -> dict:
+        """
+        :arg id_list: A list of ids (max 50) (Required)
+        :return dict: A dict containing the song items
+        Gets the information about multiple tracks from a list of ids
+        """
+        # Creates the url for the request
+        url = f"{self.base}tracks"
+
+        if len(id_list) > 50:
+            return "Error, too many ids"
+
+        # Set parameters holding the ids
+        params = {"ids":",".join(id_list)}
+
+        # Create the request and grab the returned json file
+        r = requests.get(url, params=params, headers=self.headers).json()
+
+        return r
+
 
 # Functions
 def encode_client(client_inst: OAuth) -> str:
@@ -661,6 +689,9 @@ def init(redirect_uri: str, client_id: str = None,
         # If there was an entered scope get it
         if 'scope' in response:
             scope = response['scope']
+
+        # Set the time to a new time as token just recieved
+        time_left = time.time()
             
     elif not time.time() - TIMEOUT_TIME < float(time_left):
         # Grab the json from the api
@@ -672,6 +703,9 @@ def init(redirect_uri: str, client_id: str = None,
         # If there was an entered scope get it
         if 'scope' in response:
             scope = response['scope']
+
+        # Set the time to a new time as token just recieved
+        time_left = time.time()
 
     elif not scope_st.issubset(set(verified_scope.split())) and scope != "":
         # Grab the json from the api
@@ -685,6 +719,9 @@ def init(redirect_uri: str, client_id: str = None,
         if 'scope' in response:
             scope = response['scope']
 
+        # Set the time to a new time as token just recieved
+        time_left = time.time()
+
     else:
         # Set scope as prior scope
         # so all available functions can be used
@@ -695,7 +732,7 @@ def init(redirect_uri: str, client_id: str = None,
 
     # On exit, save all details
     with open(f"{file_location}{file_name}", "w") as f:
-        print(access_token, refresh_token, time.time(),
+        print(access_token, refresh_token, time_left,
               scope, sep='\n', file=f)
 
     # Return the auth token
