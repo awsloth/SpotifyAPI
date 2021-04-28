@@ -578,6 +578,25 @@ class APIreq:
 
         return r
 
+    @type_check
+    def add_track_playback(self, track_uri: str) -> str:
+        """
+        :arg track_uri: track uri to add to the user's playback (Required)
+        :return str: Whether the request succeeded
+        Adds a track to the current user's playback
+        """
+        url = f"{self.base}me/player/queue"
+
+        params = {"uri":track_uri}
+
+        r = requests.post(url, params=params, headers=self.headers).status_code
+
+        if status_code == 403:
+            return "Error, not a premium user"
+        # Check result with another request to https://api.spotify.com/v1/me/player .json()
+        
+        return r
+
 
 # Functions
 def encode_client(client_inst: OAuth) -> str:
