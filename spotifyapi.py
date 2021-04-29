@@ -601,17 +601,12 @@ class APIreq:
 
         params = {"uri":track_uri}
 
-        r = requests.post(url, params=params, headers=self.headers).status_code
+        r = requests.post(url, params=params, headers=self.headers)
 
-        if r == 403:
+        if r.status_code == 403:
             return "Error, not a premium user"
-        elif r == 404:
+        elif r.status_code == 404:
             return "Error, device not found"
-
-        check = self.get_info_playback()
-
-        if check == {}:
-            return "Error failed to add to queue"
         
         return r
 
