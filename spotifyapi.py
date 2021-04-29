@@ -579,6 +579,18 @@ class APIreq:
         return r
 
     @type_check
+    def get_info_playback(self) -> dict:
+        """
+        :return dict: The info about the playback
+        Grabs the information about a users playback from the api
+        """
+        url = f"{self.base}me/player"
+
+        r = requests.get(url, headers=self.headers).json()
+        
+        return r
+
+    @type_check
     def add_track_playback(self, track_uri: str) -> str:
         """
         :arg track_uri: track uri to add to the user's playback (Required)
@@ -591,9 +603,15 @@ class APIreq:
 
         r = requests.post(url, params=params, headers=self.headers).status_code
 
-        if status_code == 403:
+        if r == 403:
             return "Error, not a premium user"
-        # Check result with another request to https://api.spotify.com/v1/me/player .json()
+        elif r == 404:
+            return "Error, device not found"
+
+        check = self.get_info_playback()
+
+        if check == {}:
+            return "Error failed to add to queue"
         
         return r
 
