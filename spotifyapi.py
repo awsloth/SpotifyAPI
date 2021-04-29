@@ -608,7 +608,7 @@ class APIreq:
         elif r.status_code == 404:
             return "Error, device not found"
         
-        return r
+        return "Successful"
 
 
 # Functions
