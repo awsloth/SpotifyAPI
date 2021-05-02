@@ -584,8 +584,10 @@ class APIreq:
         :return dict: The info about the playback
         Grabs the information about a users playback from the api
         """
+        # Creates the url for the request
         url = f"{self.base}me/player"
 
+        # Create the request and get the returned json
         r = requests.get(url, headers=self.headers).json()
         
         return r
@@ -597,19 +599,79 @@ class APIreq:
         :return str: Whether the request succeeded
         Adds a track to the current user's playback
         """
+        # Creates the url for the request
         url = f"{self.base}me/player/queue"
 
+        # Create the parameter for the request
         params = {"uri":track_uri}
 
+        # Create the request to the site
         r = requests.post(url, params=params, headers=self.headers)
 
+        # Check the status of the request and return the meanings
         if r.status_code == 403:
             return "Error, not a premium user"
         elif r.status_code == 404:
             return "Error, device not found"
-        
+
+        # If the request was successful return as such
         return "Successful"
 
+    @type_check
+    def pause_playback(self) -> str:
+        """
+        :return str: Returns the result of the request
+        Pauses a user's playback
+        """
+        # Creates the url for the request
+        url = f"{self.base}me/player/pause"
+
+        # Create the request to the site
+        r = requests.put(url, headers=self.headers)
+
+        # Check the status of the request and return the meanings
+        if r.status_code == 403:
+            return "Error, not a premium user"
+        elif r.status_code == 404:
+            return "Error, device not found"
+
+        # If the request was successful return as such
+        return "Successful"
+
+    @type_check
+    def get_recommendations(self, limit: int = None, artists: list = None, genres: list = None, tracks: list = None) -> dict:
+        """
+        :arg limit: The number of songs to return (max 100)
+        :arg artists: Artists for the seed
+        :arg genres: Genres for the seed
+        :arg tracks: Tracks for the seed
+        :return dict: The dictionary holding the recommended songs
+        Returns recommended songs based upon the entered values
+        """
+        # Create the url for the request
+        url = f"{self.base}recommendations"
+
+        # Create params with limit if limit argument given
+        params = {}
+        if limit is not None:
+            params.update({"limit":limit})
+        
+        # Define the argument names and values to
+        # check whether they were entered
+        arg_names = ("seed_artists", "seed_genres", "seed_tracks")
+        args = (artists, genres, tracks)
+
+        # Loop through arguments and add to dict if entered
+        for i in range(len(args)):
+            if args[i] is not None:
+                params.update({arg_names[i]: ",".join(args[i])})
+
+        print(params)
+
+        # Create the request and get the returned json
+        r = requests.get(url, headers=self.headers, params=params).json()
+
+        return r
 
 # Functions
 def encode_client(client_inst: OAuth) -> str:
