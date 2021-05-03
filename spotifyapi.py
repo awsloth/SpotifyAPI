@@ -687,6 +687,24 @@ class APIreq:
 
         return r
 
+    @type_check
+    def get_artists(self, ids: list) -> dict:
+        """
+        :arg ids: A list of track ids
+        :return dict: The dictionary with information about the artists
+        Gets the artists corresponding to the ids
+        """
+        # Create url
+        url = f"{self.base}artists"
+
+        # Create parameters
+        params = {'ids': ",".join(ids)}
+
+        # Create the request and get the returned json file
+        r = requests.get(url, params=params, headers=self.headers).json()
+
+        return r
+
 
 # Functions
 def encode_client(client_inst: OAuth) -> str:
