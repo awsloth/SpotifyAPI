@@ -281,7 +281,7 @@ class APIreq:
 
     @type_check
     def add_items_playlist(self, playlist_id: str,
-                           uris: list[str], position: int = None) -> dict:
+                           uris: list, position: int = None) -> dict:
         """
         :arg playlist_id: The id of  the spotify playlist to
                           add items to (Required)
@@ -381,7 +381,7 @@ class APIreq:
         header.update({"Content-Type": "application/json"})
 
         # Create a body for holding the arguments
-        body = {}
+        params = {}
 
         # Define the argument names and values to
         # check whether they were entered
@@ -393,12 +393,11 @@ class APIreq:
         # Loop through arguments and add to body if entered
         for i in range(len(args)):
             if args[i] is not None:
-                body.update({arg_names[i]: arg_vals[i]})
+                params.update({arg_names[i]: arg_vals[i]})
 
-        body = json.dumps(body)
 
         # Create the request and grab the returned json file
-        r = requests.get(url).json()
+        r = requests.get(url, headers=header, params=params).json()
 
         return r
 
