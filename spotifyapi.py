@@ -33,7 +33,7 @@ def type_check(func: Callable) -> Callable:
         """
         # Check the arguments for the function
         argument = func.__annotations__
-        
+
         # Check through the given named arguments
         for key in kwargs:
             # If the named variable is not in the
@@ -56,10 +56,10 @@ def type_check(func: Callable) -> Callable:
         for i in range(len(arguments)):
             # If the value is not of the type hinted type refuse call
             if not isinstance(arguments[i], list(argument.values())[i]):
-                spec_argument = list(argument.keys())[i]
+                spec_arg = list(argument.keys())[i]
                 arg_type = str(list(argument.values())[i])
                 arg_type = arg_type.replace("<class ", '')[1:-2]
-                raise TypeError(f"{spec_argument} should be of type {arg_type}")
+                raise TypeError(f"{spec_arg} should be of type {arg_type}")
 
         # If all arguments are of the type hinted go ahead with the request
         return func(*args, **kwargs)
@@ -186,7 +186,7 @@ class OAuth:
             webbrowser.open(auth_url)
         else:
             print(auth_url)
-            
+
         auth_code = input()[len(self.redirect_uri)+6:]
 
         # Grab the tokens with the code given
@@ -194,6 +194,7 @@ class OAuth:
 
         # Return the tokens
         return tokens
+
 
 class APIreq:
     """
@@ -279,8 +280,8 @@ class APIreq:
         return r if r else "Success"
 
     @type_check
-    def add_item_playlist(self, playlist_id: str,
-                          uris: list[str], position: int = None) -> dict:
+    def add_items_playlist(self, playlist_id: str,
+                           uris: list[str], position: int = None) -> dict:
         """
         :arg playlist_id: The id of  the spotify playlist to
                           add items to (Required)
@@ -571,7 +572,7 @@ class APIreq:
             return "Error, too many ids"
 
         # Set parameters holding the ids
-        params = {"ids":",".join(id_list)}
+        params = {"ids": ",".join(id_list)}
 
         # Create the request and grab the returned json file
         r = requests.get(url, params=params, headers=self.headers).json()
@@ -589,7 +590,7 @@ class APIreq:
 
         # Create the request and get the returned json
         r = requests.get(url, headers=self.headers).json()
-        
+
         return r
 
     @type_check
@@ -603,7 +604,7 @@ class APIreq:
         url = f"{self.base}me/player/queue"
 
         # Create the parameter for the request
-        params = {"uri":track_uri}
+        params = {"uri": track_uri}
 
         # Create the request to the site
         r = requests.post(url, params=params, headers=self.headers)
@@ -639,7 +640,8 @@ class APIreq:
         return "Successful"
 
     @type_check
-    def get_recommendations(self, limit: int = None, artists: list = None, genres: list = None, tracks: list = None) -> dict:
+    def get_recommendations(self, limit: int = None, artists: list = None,
+                            genres: list = None, tracks: list = None) -> dict:
         """
         :arg limit: The number of songs to return (max 100)
         :arg artists: Artists for the seed
@@ -654,8 +656,8 @@ class APIreq:
         # Create params with limit if limit argument given
         params = {}
         if limit is not None:
-            params.update({"limit":limit})
-        
+            params.update({"limit": limit})
+
         # Define the argument names and values to
         # check whether they were entered
         arg_names = ("seed_artists", "seed_genres", "seed_tracks")
@@ -666,12 +668,25 @@ class APIreq:
             if args[i] is not None:
                 params.update({arg_names[i]: ",".join(args[i])})
 
-        print(params)
-
         # Create the request and get the returned json
         r = requests.get(url, headers=self.headers, params=params).json()
 
         return r
+
+    @type_check
+    def get_user(self) -> dict:
+        """
+        :return dict: Information about the user
+        Gets information about the current user
+        """
+        # Create url
+        url = f"{self.base}me"
+
+        # Create the request and get the returned json
+        r = requests.get(url, headers=self.headers).json()
+
+        return r
+
 
 # Functions
 def encode_client(client_inst: OAuth) -> str:
@@ -725,7 +740,7 @@ def init(redirect_uri: str, client_id: str = None,
             file_location = f"{file_loc}"
     else:
         file_location = f"{os.getcwd()}"
-            
+
     # Create file name string
     file_name = f"\\{user if user is not None else ''}.cache"
 
@@ -786,14 +801,14 @@ def init(redirect_uri: str, client_id: str = None,
 
         # Set the time to a new time as token just recieved
         time_left = time.time()
-            
+
     elif not time.time() - TIMEOUT_TIME < float(time_left):
         # Grab the json from the api
         response = client.grab_token_refresh(refresh_token)
 
         # Grab the tokens and scope from the api
         access_token = response['access_token']
-        
+
         # If there was an entered scope get it
         if 'scope' in response:
             scope = response['scope']
@@ -808,7 +823,7 @@ def init(redirect_uri: str, client_id: str = None,
         # Grab the tokens and scope from the api
         access_token = response['access_token']
         refresh_token = response['refresh_token']
-        
+
         # If there was an entered scope get it
         if 'scope' in response:
             scope = response['scope']
