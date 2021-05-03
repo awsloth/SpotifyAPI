@@ -395,9 +395,10 @@ class APIreq:
             if args[i] is not None:
                 params.update({arg_names[i]: arg_vals[i]})
 
+        body = json.dumps(params)
 
         # Create the request and grab the returned json file
-        r = requests.post(url, headers=header, params=params).json()
+        r = requests.post(url, headers=header, data=body).json()
 
         return r
 
