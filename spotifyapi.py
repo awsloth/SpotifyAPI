@@ -397,7 +397,7 @@ class APIreq:
 
 
         # Create the request and grab the returned json file
-        r = requests.get(url, headers=header, params=params).json()
+        r = requests.post(url, headers=header, params=params).json()
 
         return r
 
