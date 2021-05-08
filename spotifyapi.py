@@ -24,6 +24,7 @@ def type_check(func: Callable) -> Callable:
     :return Callable: The function combined with the decorator
     Adds the decorator to the function decorated with it
     """
+    # noinspection PyUnresolvedReferences
     @wraps(func)
     def wrapper(*args: list, **kwargs: dict):
         """
@@ -174,7 +175,7 @@ class OAuth:
     def first_run(self, auto_open: bool = True) -> dict:
         """
         :arg auto_open: determines whether the function prints the link
-                        or opens it using the webbrowser module (Optional)
+                        or opens it using the web browser module (Optional)
         :return dict: The tokens received from running through the OAuth
         Performs the steps to authorise a session and returns the tokens
         """
@@ -199,7 +200,7 @@ class OAuth:
 
 
 # API request class to make requests to the spotify api
-class APIreq:
+class APIReq:
     """
     A class to make requests to the Spotify API
     """
@@ -887,9 +888,9 @@ def init(redirect_uri: str, user: str,
         scope = verified_scope
 
     if check_user(user):
-        save_func(user, access_token, refresh_token, time_left, scope)
-    else:
         update_func(user, access_token, refresh_token, time_left, scope)
+    else:
+        save_func(user, access_token, refresh_token, time_left, scope)
 
     # Return the auth token
     return access_token
