@@ -198,6 +198,7 @@ class OAuth:
         return tokens
 
 
+# API request class to make requests to the spotify api
 class APIreq:
     """
     A class to make requests to the Spotify API
@@ -729,7 +730,16 @@ def encode_client(client_inst: OAuth) -> str:
 
 
 # Function to save user data
-def save_data(user, auth_token, refresh_token, time_left, scope):
+def save_data(user: str, auth_token: str, refresh_token: str,
+              time_left: float, scope: str):
+    """
+    :arg user: The user to save the data for
+    :arg auth_token: The auth token for the user
+    :arg refresh_token: The refresh token for the user
+    :arg time_left: The time left that the auth token is valid for
+    :arg scope: The scope the user is authenticated for
+    Saves the given data in a file for later use
+    """
     # Create file name string
     file_name = fr"\{user}.cache"
 
@@ -746,7 +756,12 @@ def save_data(user, auth_token, refresh_token, time_left, scope):
 
 
 # Function to read user data
-def read_data(user):
+def read_data(user: str) -> list:
+    """
+    :arg user: The user whose data is going to be read
+    :return list: A list containing the data about the user
+    Reads the data from the user's file
+    """
     # Define file_location
     file_location = fr"{os.getcwd()}\cache"
     with open(fr"{file_location}\{user}.cache") as f:
@@ -755,7 +770,14 @@ def read_data(user):
     return contents
 
 
-def check_user(user):
+# Function to check user's data exists
+def check_user(user: str) -> bool:
+    """
+    :arg user: The user to check the data for
+    :return bool: Whether the user has data stored about them
+    A function that checks through the stored files to check
+    if the user has a file
+    """
     # Define file_location
     file_location = fr"{os.getcwd()}\cache"
 
@@ -827,7 +849,10 @@ def init(redirect_uri: str, user: str,
     client = OAuth(client_id, client_secret, redirect_uri, scope)
 
     # If scope unsuitable, run out of time or new user re-request tokens
-    if not check_func(user):
+    if (
+            (not check_func(user)) or
+            (not scope_st.issubset(set(verified_scope.split())) and scope != "")
+    ):
         # Grab the json from the api
         response = client.first_run()
 
@@ -848,21 +873,6 @@ def init(redirect_uri: str, user: str,
 
         # Grab the tokens and scope from the api
         access_token = response['access_token']
-
-        # If there was an entered scope get it
-        if 'scope' in response:
-            scope = response['scope']
-
-        # Set the time to a new time as token just received
-        time_left = time.time()
-
-    elif not scope_st.issubset(set(verified_scope.split())) and scope != "":
-        # Grab the json from the api
-        response = client.first_run()
-
-        # Grab the tokens and scope from the api
-        access_token = response['access_token']
-        refresh_token = response['refresh_token']
 
         # If there was an entered scope get it
         if 'scope' in response:
