@@ -1,9 +1,11 @@
 # Import base libraries
-import requests
 import webbrowser
 import time
 import os
 import json
+
+# Import pip library
+import requests
 
 # Import from libraries
 from base64 import b64encode
@@ -205,7 +207,7 @@ class APIreq:
         """
         :arg auth_token: The authorization token from spotify
         :return None:
-        Sets up the APIreq class to make requests to the Spotify API
+        Sets up the API request class to make requests to the Spotify API
         """
         # Create the variable base to store the base of the url for spotify api
         self.base = "https://api.spotify.com/v1/"
@@ -344,12 +346,12 @@ class APIreq:
         # check whether they were entered
         arg_names = ("name", "public", "collaborative", "description")
         args = (name, public, collaborative, description)
-        arg_vals = (name, "true" if public else "false",
-                    "true" if collaborative else "false", description)
+        arg_values = (name, "true" if public else "false",
+                      "true" if collaborative else "false", description)
 
         for i in range(len(args)):
             if args[i] is not None:
-                body.update({arg_names[i]: arg_vals[i]})
+                body.update({arg_names[i]: arg_values[i]})
 
         body = json.dumps(body)
 
@@ -387,13 +389,13 @@ class APIreq:
         # check whether they were entered
         arg_names = ("name", "public", "collaborative", "description")
         args = (name, public, collaborative, description)
-        arg_vals = (name, "true" if public else "false",
-                    "true" if collaborative else "false", description)
+        arg_values = (name, "true" if public else "false",
+                      "true" if collaborative else "false", description)
 
         # Loop through arguments and add to body if entered
         for i in range(len(args)):
             if args[i] is not None:
-                params.update({arg_names[i]: arg_vals[i]})
+                params.update({arg_names[i]: arg_values[i]})
 
         body = json.dumps(params)
 
@@ -545,7 +547,7 @@ class APIreq:
         return r
 
     @type_check
-    def genres_rcommnd(self) -> dict:
+    def genres_recommend(self) -> dict:
         """
         :return dict: The dict containing the available genres
         Gets the available genre seeds from the api
@@ -569,7 +571,7 @@ class APIreq:
         url = f"{self.base}tracks"
 
         if len(id_list) > 50:
-            return "Error, too many ids"
+            return {"Error": "Error, too many ids"}
 
         # Set parameters holding the ids
         params = {"ids": ",".join(id_list)}
@@ -726,66 +728,86 @@ def encode_client(client_inst: OAuth) -> str:
     return encoded_client
 
 
+# Function to save user data
+def save_data(user, auth_token, refresh_token, time_left, scope):
+    # Create file name string
+    file_name = fr"\{user}.cache"
+
+    # Define file_location
+    file_location = fr"{os.getcwd()}\cache"
+
+    # Create directory if not already existent
+    os.makedirs(fr"{file_location}", exist_ok=True)
+
+    # Save details
+    with open(fr"{file_location}{file_name}", "w") as f:
+        print(auth_token, refresh_token, time_left,
+              scope, sep='\n', file=f)
+
+
+# Function to read user data
+def read_data(user):
+    # Define file_location
+    file_location = fr"{os.getcwd()}\cache"
+    with open(fr"{file_location}\{user}.cache") as f:
+        contents = [line.rstrip() for line in f.readlines()]
+
+    return contents
+
+
+def check_user(user):
+    # Define file_location
+    file_location = fr"{os.getcwd()}\cache"
+
+    # Create file name string
+    file_name = fr"{user}.cache"
+
+    # If file name in the files at the location
+    return file_name in os.listdir(file_location)
+
+
 @type_check
-def init(redirect_uri: str, client_id: str = None,
-         client_secret: str = None, scope: str = None,
-         user: str = None, file_loc: str = None) -> str:
+def init(redirect_uri: str, user: str,
+         client_id: str = None, client_secret: str = None,
+         scope: str = None, save_func: Callable = save_data,
+         read_func: Callable = read_data, update_func: Callable = save_data,
+         check_func: Callable = check_user) -> str:
     """
     :arg redirect_uri: The uri to redirect the user to when
                        making the request (Required)
+    :arg user: For handling multiple users (Required)
     :arg client_id: The client_id of your application, if not given will
                     search for SPOTIFY_ID in environment variables (Optional)
     :arg secret_id: The client_secret of your application, if not given will
                     search for SPOTIFY_SECRET in environment
                     variables (Optional)
     :arg scope: The scope for the request (Optional)
-    :arg user: For handling multiple users (Optional)
     :arg file_loc: The location to hold the token file (Optional)
+    :arg save_func: A function to save user data, must take user,
+                    authentication token, refresh token, time and
+                    scope as inputs (Optional)
+    :arg read_func: A function to read user data, must take user as
+                    argument and return stored data about them (Optional)
+    :arg update_func: A function to update user data, must take user,
+                      authentication token, refresh token, time and
+                      scope as inputs (Optional)
+    :arg check_func: A function to check whether a user's data is
+                     stored already or not takes user as the
+                     argument True if stored else False (Optional)
     :return str: The token needed to make requests
     Initialises the program so that requests can be made
     and gives the access token
     """
-    # Variable to track if the location is absolute
-    absolute = False
-    # Checks if the location is specified
-    if file_loc is not None:
-        # If the path specified is an absolute path, use it
-        # else get the current directory and add on the path
-        if not file_loc.startswith(os.getcwd()):
-            file_location = f"{os.getcwd()}{file_loc}"
-        else:
-            absolute = True
-            file_location = f"{file_loc}"
+    # If the user is stored already grab the existing data
+    # else set new_user to false
+    if check_func(user):
+        access_token, refresh_token, time_left, verified_scope = read_func(user)
     else:
-        file_location = f"{os.getcwd()}"
-
-    # Create file name string
-    file_name = f"\\{user if user is not None else ''}.cache"
-
-    # Get all files in file location
-    folders = os.listdir(file_location)
-    if "cache" in folders:
-        file_location += r"\cache"
-        files = os.listdir(file_location)
-    else:
-        # If the path was absolute get the files in that directory
-        # else create and empty files list
-        if absolute:
-            files = os.listdir(file_location)
-        else:
-            file_location += r"\cache"
-            files = []
-
-    # Inititalise new user to True
-    new_user = True
-
-    # If the file exists in the expected location go ahead
-    if file_name[1:] in files:
-        # Grab tokens from past run
-        with open(f"{file_location}{file_name}") as f:
-            contents = [line.rstrip() for line in f.readlines()]
-            access_token, refresh_token, time_left, verified_scope = contents
-        new_user = False
+        # Define variables for editor
+        access_token = None
+        refresh_token = None
+        time_left = None
+        verified_scope = ""
 
     # If the user didn't enter their id or secret
     # attempt to get it from the environment variables
@@ -805,7 +827,7 @@ def init(redirect_uri: str, client_id: str = None,
     client = OAuth(client_id, client_secret, redirect_uri, scope)
 
     # If scope unsuitable, run out of time or new user re-request tokens
-    if new_user:
+    if not check_func(user):
         # Grab the json from the api
         response = client.first_run()
 
@@ -817,7 +839,7 @@ def init(redirect_uri: str, client_id: str = None,
         if 'scope' in response:
             scope = response['scope']
 
-        # Set the time to a new time as token just recieved
+        # Set the time to a new time as token just received
         time_left = time.time()
 
     elif not time.time() - TIMEOUT_TIME < float(time_left):
@@ -831,7 +853,7 @@ def init(redirect_uri: str, client_id: str = None,
         if 'scope' in response:
             scope = response['scope']
 
-        # Set the time to a new time as token just recieved
+        # Set the time to a new time as token just received
         time_left = time.time()
 
     elif not scope_st.issubset(set(verified_scope.split())) and scope != "":
@@ -846,7 +868,7 @@ def init(redirect_uri: str, client_id: str = None,
         if 'scope' in response:
             scope = response['scope']
 
-        # Set the time to a new time as token just recieved
+        # Set the time to a new time as token just received
         time_left = time.time()
 
     else:
@@ -854,13 +876,10 @@ def init(redirect_uri: str, client_id: str = None,
         # so all available functions can be used
         scope = verified_scope
 
-    # Create directory if not already existant
-    os.makedirs(f"{file_location}", exist_ok=True)
-
-    # On exit, save all details
-    with open(f"{file_location}{file_name}", "w") as f:
-        print(access_token, refresh_token, time_left,
-              scope, sep='\n', file=f)
+    if check_user(user):
+        save_func(user, access_token, refresh_token, time_left, scope)
+    else:
+        update_func(user, access_token, refresh_token, time_left, scope)
 
     # Return the auth token
     return access_token
