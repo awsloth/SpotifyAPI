@@ -306,6 +306,7 @@ class APIReq:
         body = {
             "uris": uris
             }
+
         if position is not None:
             body.update({"position": position})
 
