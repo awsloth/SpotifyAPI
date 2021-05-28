@@ -83,7 +83,7 @@ class OAuth:
         :arg cli_secret: The spotify application client secret (Required)
         :arg red_uri: The uri to redirect the user to after
                       authorising the application (Required)
-        :arg scope: The scope for the application to use (Optional)
+        :arg req_scope: The scope for the application to use (Optional)
         :return None:
         Init function for the OAuth class
         """
@@ -715,6 +715,79 @@ class APIReq:
 
         return r
 
+    @type_check
+    def get_artist_top(self, artist_id: str, country: str = "from_token") -> dict:
+        """
+        :arg artist_id: The id of the artist (Required)
+        :arg country: The country market to get the top tracks  (Optional)
+        Gets the top tracks for the given artist id
+        """
+        url = f"{self.base}artists/{artist_id}/top-tracks"
+
+        params = {'market': country}
+
+        r = requests.get(url, params=params, headers=self.headers).json()
+
+        return r
+
+    @type_check
+    def search(self, query: str, s_type: list, limit: int = None, offset: int = None) -> dict:
+        """
+        :arg query: The query to search for (Required)
+        :arg s_type: The type of thing to return (Required)
+        :arg limit: The max number of objects to return
+        :arg offset: The offset of the objects to return
+        Searches spotify with the given query
+        """
+        url = f"{self.base}search"
+
+        params = {"q": query, "type": ",".join(s_type)}
+
+        names = ("limit", "offset")
+        values = (limit, offset)
+        for name, val in zip(names, values):
+            if val is not None:
+                params.update({name: val})
+
+        r = requests.get(url, params=params, headers=self.headers).json()
+
+        return r
+
+    @type_check
+    def get_artist_albums(self, artist_id: str, limit: int = None, offset: int = None) -> dict:
+        """
+        :arg artist_id: The id of the artist to get the albums of
+        :arg limit: The max number of albums to return
+        :arg offset: The offset of the albums to return
+        Gets the albums of an artist
+        """
+        url = f"{self.base}artists/{artist_id}/albums"
+
+        params = {}
+        names = ("limit", "offset")
+        values = (limit, offset)
+        for name, val in zip(names, values):
+            if val is not None:
+                params.update({name: val})
+
+        r = requests.get(url, params=params, headers=self.headers).json()
+
+        return r
+
+    @type_check
+    def get_albums(self, album_ids: list) -> dict:
+        """
+        :arg album_ids: A list of album ids to fetch, max 20
+        Fetches info about the albums given by their ids
+        """
+        url = f"{self.base}albums"
+
+        params = {"ids": ",".join(album_ids)}
+
+        r = requests.get(url, params=params, headers=self.headers).json()
+
+        return r
+
 
 # Functions
 def encode_client(client_inst: OAuth) -> str:
@@ -807,11 +880,10 @@ def init(redirect_uri: str, user: str,
     :arg user: For handling multiple users (Required)
     :arg client_id: The client_id of your application, if not given will
                     search for SPOTIFY_ID in environment variables (Optional)
-    :arg secret_id: The client_secret of your application, if not given will
+    :arg client_secret: The client_secret of your application, if not given will
                     search for SPOTIFY_SECRET in environment
                     variables (Optional)
     :arg scope: The scope for the request (Optional)
-    :arg file_loc: The location to hold the token file (Optional)
     :arg save_func: A function to save user data, must take user,
                     authentication token, refresh token, time and
                     scope as inputs (Optional)
