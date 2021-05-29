@@ -16,6 +16,9 @@ from functools import wraps
 # Constant for time taken to timeout
 TIMEOUT_TIME = 3600
 
+# TODO add decorator to show the json of a request
+# TODO or the headers upon a timeout error
+
 
 # Type_check decorator used to check the arguments of the required type
 def type_check(func: Callable) -> Callable:
@@ -28,8 +31,8 @@ def type_check(func: Callable) -> Callable:
     @wraps(func)
     def wrapper(*args: list, **kwargs: dict):
         """
-        :arg args: The list of arguments
-        :arg kwargs: The dict of arguments
+        :arg args: The list of arguments (Required)
+        :arg kwargs: The dict of arguments (Required)
         :return func_return: The return value of the decorated function
         Checks each argument against the type hints and
         rejects it if not the correct type
@@ -43,9 +46,13 @@ def type_check(func: Callable) -> Callable:
             # specified variables raise an error
             if key not in argument:
                 raise TypeError(f"Unknown argument {key}")
+
             # If the value is not of the type hinted type refuse call
             if not isinstance(kwargs[key], argument[key]):
+                # Get the type the argument should be
                 arg_type = str(argument[key]).replace("<class ", '')[1:-2]
+
+                # Raise a type error with the type the variable should be
                 raise TypeError(f"{key} should be of type {arg_type}")
 
         # If the first argument is a
@@ -57,6 +64,7 @@ def type_check(func: Callable) -> Callable:
 
         # Go through the values in order
         for i in range(len(arguments)):
+
             # If the value is not of the type hinted type refuse call
             if not isinstance(arguments[i], list(argument.values())[i]):
                 spec_arg = list(argument.keys())[i]
@@ -74,7 +82,7 @@ def type_check(func: Callable) -> Callable:
 # OAuth class to organise functions for OAuth
 class OAuth:
     """
-    A class to deal with the spotify OAuth and get an access token
+    A class to deal with the Spotify OAuth and get an access token
     """
     def __init__(self, cli_id: str, cli_secret: str,
                  red_uri: str, req_scope: str = None) -> None:
@@ -106,6 +114,7 @@ class OAuth:
         # Join the website parameters with a '&'
         params = "&".join(filter(None, variables))
 
+        # TODO change to params argument for request
         # Request the site
         r = requests.get("https://accounts.spotify.com/authorize?"+params)
 
@@ -126,6 +135,7 @@ class OAuth:
             "code": code,
             "redirect_uri": self.redirect_uri
             }
+
         # Convert body into url encoded text
         encoded = parse.urlencode(body)
 
@@ -190,6 +200,7 @@ class OAuth:
         else:
             print(auth_url)
 
+        # Grab the auth_token from input and remove the unneeded info
         auth_code = input()[len(self.redirect_uri)+6:]
 
         # Grab the tokens with the code given
@@ -207,7 +218,7 @@ class APIReq:
     @type_check
     def __init__(self, auth_token: str) -> None:
         """
-        :arg auth_token: The authorization token from spotify
+        :arg auth_token: The authorization token from spotify (Required)
         :return None:
         Sets up the API request class to make requests to the Spotify API
         """
@@ -653,12 +664,13 @@ class APIReq:
     def get_recommendations(self, limit: int = None, artists: list = None,
                             genres: list = None, tracks: list = None) -> dict:
         """
-        :arg limit: The number of songs to return (max 100)
-        :arg artists: Artists for the seed
-        :arg genres: Genres for the seed
-        :arg tracks: Tracks for the seed
+        :arg limit: The number of songs to return (max 100) (Optional)
+        :arg artists: Artists for the seed (max 5) (Optional)
+        :arg genres: Genres for the seed (max 5) (Optional)
+        :arg tracks: Tracks for the seed (max 5) (Optional)
         :return dict: The dictionary holding the recommended songs
         Returns recommended songs based upon the entered values
+        The sum of numbers of artists, genres and tracks must be 5 or less
         """
         # Create the url for the request
         url = f"{self.base}recommendations"
@@ -700,7 +712,7 @@ class APIReq:
     @type_check
     def get_artists(self, ids: list) -> dict:
         """
-        :arg ids: A list of track ids
+        :arg ids: A list of track ids (Required)
         :return dict: The dictionary with information about the artists
         Gets the artists corresponding to the ids
         """
@@ -720,6 +732,7 @@ class APIReq:
         """
         :arg artist_id: The id of the artist (Required)
         :arg country: The country market to get the top tracks  (Optional)
+        :return dict: A dict containing the artist's top songs
         Gets the top tracks for the given artist id
         """
         url = f"{self.base}artists/{artist_id}/top-tracks"
@@ -735,8 +748,9 @@ class APIReq:
         """
         :arg query: The query to search for (Required)
         :arg s_type: The type of thing to return (Required)
-        :arg limit: The max number of objects to return
-        :arg offset: The offset of the objects to return
+        :arg limit: The max number of objects to return (Optional)
+        :arg offset: The offset of the objects to return (Optional)
+        :return dict: The results of the search
         Searches spotify with the given query
         """
         url = f"{self.base}search"
@@ -756,9 +770,10 @@ class APIReq:
     @type_check
     def get_artist_albums(self, artist_id: str, limit: int = None, offset: int = None) -> dict:
         """
-        :arg artist_id: The id of the artist to get the albums of
-        :arg limit: The max number of albums to return
-        :arg offset: The offset of the albums to return
+        :arg artist_id: The id of the artist to get the albums of (Required)
+        :arg limit: The max number of albums to return (Optional)
+        :arg offset: The offset of the albums to return (Optional)
+        :return dict: A dict containing the albums
         Gets the albums of an artist
         """
         url = f"{self.base}artists/{artist_id}/albums"
@@ -777,7 +792,8 @@ class APIReq:
     @type_check
     def get_albums(self, album_ids: list) -> dict:
         """
-        :arg album_ids: A list of album ids to fetch, max 20
+        :arg album_ids: A list of album ids to fetch (max 20) (Required)
+        :return dict: A dict containing the album info
         Fetches info about the albums given by their ids
         """
         url = f"{self.base}albums"
@@ -811,13 +827,14 @@ def encode_client(client_inst: OAuth) -> str:
 
 # Function to save user data
 def save_data(user: str, auth_token: str, refresh_token: str,
-              time_left: float, scope: str):
+              time_left: float, scope: str) -> None:
     """
-    :arg user: The user to save the data for
-    :arg auth_token: The auth token for the user
-    :arg refresh_token: The refresh token for the user
-    :arg time_left: The time left that the auth token is valid for
-    :arg scope: The scope the user is authenticated for
+    :arg user: The user to save the data for (Required)
+    :arg auth_token: The auth token for the user (Required)
+    :arg refresh_token: The refresh token for the user (Required)
+    :arg time_left: The time left that the auth token is valid for (Required)
+    :arg scope: The scope the user is authenticated for (Required)
+    :return None:
     Saves the given data in a file for later use
     """
     # Create file name string
@@ -838,7 +855,7 @@ def save_data(user: str, auth_token: str, refresh_token: str,
 # Function to read user data
 def read_data(user: str) -> list:
     """
-    :arg user: The user whose data is going to be read
+    :arg user: The user whose data is going to be read (Required)
     :return list: A list containing the data about the user
     Reads the data from the user's file
     """
@@ -853,7 +870,7 @@ def read_data(user: str) -> list:
 # Function to check user's data exists
 def check_user(user: str) -> bool:
     """
-    :arg user: The user to check the data for
+    :arg user: The user to check the data for (Required)
     :return bool: Whether the user has data stored about them
     A function that checks through the stored files to check
     if the user has a file
