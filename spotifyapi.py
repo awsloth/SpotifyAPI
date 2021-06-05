@@ -804,6 +804,22 @@ class APIReq:
 
         return r
 
+    @type_check
+    def replace_items(self, playlist_id: str, uris: list) -> dict:
+        """
+        :arg playlist_id: The playlist to replace the songs on
+        :arg uris: The uris of the songs to replace
+        :return dict: The dict containing the snapshot id
+        Replaces items in a playlist
+        """
+        url = f"{self.base}playlists/{playlist_id}/tracks"
+
+        params = {"uris": ','.join(uris)}
+
+        r = requests.put(url, params=params, headers=self.headers).json()
+
+        return r
+
 
 # Functions
 def encode_client(client_inst: OAuth) -> str:
