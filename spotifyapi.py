@@ -814,9 +814,15 @@ class APIReq:
         """
         url = f"{self.base}playlists/{playlist_id}/tracks"
 
-        params = {"uris": ','.join(uris)}
+        # Add a new header with the content type identifier
+        header = self.headers.copy()
+        header.update({"Content-Type": "application/json"})
 
-        r = requests.put(url, params=params, headers=self.headers).json()
+        body = {"uris": uris}
+
+        body = json.dumps(body)
+
+        r = requests.put(url, data=body, headers=header).json()
 
         return r
 
