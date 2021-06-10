@@ -22,7 +22,8 @@ TIMEOUT_TIME = 3600
 
 # Type_check decorator used to check the arguments of the required type
 def type_check(func: Callable) -> Callable:
-    """
+    """Performs decoration
+
     :arg func: The function the decorator is assigned to (Required)
     :return Callable: The function combined with the decorator
     Adds the decorator to the function decorated with it
@@ -30,7 +31,8 @@ def type_check(func: Callable) -> Callable:
     # noinspection PyUnresolvedReferences
     @wraps(func)
     def wrapper(*args: list, **kwargs: dict):
-        """
+        """Type checks variable
+
         :arg args: The list of arguments (Required)
         :arg kwargs: The dict of arguments (Required)
         :return func_return: The return value of the decorated function
@@ -63,10 +65,10 @@ def type_check(func: Callable) -> Callable:
             arguments = args
 
         # Go through the values in order
-        for i in range(len(arguments)):
+        for i, arg in enumerate(arguments):
 
             # If the value is not of the type hinted type refuse call
-            if not isinstance(arguments[i], list(argument.values())[i]):
+            if not isinstance(arg, list(argument.values())[i]):
                 spec_arg = list(argument.keys())[i]
                 arg_type = str(list(argument.values())[i])
                 arg_type = arg_type.replace("<class ", '')[1:-2]
@@ -81,19 +83,18 @@ def type_check(func: Callable) -> Callable:
 
 # OAuth class to organise functions for OAuth
 class OAuth:
-    """
-    A class to deal with the Spotify OAuth and get an access token
-    """
+    """A class to deal with the Spotify OAuth and get an access token"""
     def __init__(self, cli_id: str, cli_secret: str,
                  red_uri: str, req_scope: str = None) -> None:
-        """
+        """Init function
+
         :arg cli_id: The spotify application client id (Required)
         :arg cli_secret: The spotify application client secret (Required)
         :arg red_uri: The uri to redirect the user to after
                       authorising the application (Required)
         :arg req_scope: The scope for the application to use (Optional)
         :return None:
-        Init function for the OAuth class
+        Init function for the OAuth class that sets variables
         """
         # Define the 4 variables required to do oauth requests
         self.client_id = cli_id
@@ -102,7 +103,8 @@ class OAuth:
         self.scope = req_scope
 
     def grab_code(self) -> str:
-        """
+        """Grabs auth code
+
         :return str: The url of the site to visit
         Grabs the website so that the user can authorise the application
         """
@@ -122,7 +124,8 @@ class OAuth:
         return r.url
 
     def grab_token(self, code: str) -> dict:
-        """
+        """Grabs token
+
         :arg code: The code given by the redirect page after
                    the user authorises use (Required)
         :return dict: The tokens stored in a dictionary
@@ -153,7 +156,8 @@ class OAuth:
         return r.json()
 
     def grab_token_refresh(self, refresh_tok: str) -> dict:
-        """
+        """Grabs refresh token
+
         :arg refresh_tok: Token received that deals with
                           refreshing authentication token (Required)
         :return dict: The dict holding the new token
@@ -183,7 +187,8 @@ class OAuth:
         return r.json()
 
     def first_run(self, auto_open: bool = True) -> dict:
-        """
+        """Performs steps for first run
+
         :arg auto_open: determines whether the function prints the link
                         or opens it using the web browser module (Optional)
         :return dict: The tokens received from running through the OAuth
@@ -212,12 +217,11 @@ class OAuth:
 
 # API request class to make requests to the spotify api
 class APIReq:
-    """
-    A class to make requests to the Spotify API
-    """
+    """A class to make requests to the Spotify API"""
     @type_check
     def __init__(self, auth_token: str) -> None:
-        """
+        """Init function for API
+
         :arg auth_token: The authorization token from spotify (Required)
         :return None:
         Sets up the API request class to make requests to the Spotify API
@@ -232,7 +236,8 @@ class APIReq:
 
     @type_check
     def follow_playlist(self, playlist_id: str, private: bool = False) -> str:
-        """
+        """Follows playlist
+
         :arg playlist_id: The id of the spotify playlist to follow (Required)
         :arg private: Whether the playlist to follow is
                       private or not (Optional)
@@ -264,7 +269,8 @@ class APIReq:
     @type_check
     def unfollow_playlist(self, playlist_id: str,
                           private: bool = False) -> str:
-        """
+        """Unfollows Playlist
+
         :arg playlist_id: The id of the spotify playlist
                           to unfollow (Required)
         :arg private: Whether the playlist to unfollow is
@@ -297,7 +303,8 @@ class APIReq:
     @type_check
     def add_items_playlist(self, playlist_id: str,
                            uris: list, position: int = None) -> dict:
-        """
+        """Adds songs to playlist
+
         :arg playlist_id: The id of  the spotify playlist to
                           add items to (Required)
         :arg uris: A list of string uris referring to the spotify tracks
@@ -333,7 +340,8 @@ class APIReq:
                                 name: str = None, public: bool = None,
                                 collaborative: bool = None,
                                 description: str = None) -> str:
-        """
+        """Changes details
+
         :arg playlist_id: The id of the playlist to
                           change details about (Required)
         :arg name: The new name of the given playlist (Optional)
@@ -344,7 +352,7 @@ class APIReq:
         :return str: Success if request worked,
                      else the error associated with the request
         Changes details about the playlist like description,
-        name and publicity (optional)
+        name and publicity
         """
         # Creates the url for the request
         url = f"{self.base}playlists/{playlist_id}"
@@ -363,8 +371,8 @@ class APIReq:
         arg_values = (name, "true" if public else "false",
                       "true" if collaborative else "false", description)
 
-        for i in range(len(args)):
-            if args[i] is not None:
+        for i, arg in enumerate(args):
+            if arg is not None:
                 body.update({arg_names[i]: arg_values[i]})
 
         body = json.dumps(body)
@@ -379,7 +387,8 @@ class APIReq:
     def create_playlist(self, user_id: str, name: str,
                         public: bool = None, collaborative: bool = None,
                         description: str = None) -> dict:
-        """
+        """Creates a playlist
+
         :arg user_id: The user id to add the playlist to (Required)
         :arg name: The name of the created playlist (Required)
         :arg public: Whether the playlist will be public or not (Optional)
@@ -407,8 +416,8 @@ class APIReq:
                       "true" if collaborative else "false", description)
 
         # Loop through arguments and add to body if entered
-        for i in range(len(args)):
-            if args[i] is not None:
+        for i, arg in enumerate(args):
+            if arg is not None:
                 params.update({arg_names[i]: arg_values[i]})
 
         body = json.dumps(params)
@@ -420,7 +429,8 @@ class APIReq:
 
     @type_check
     def get_playlist(self, playlist_id: str) -> dict:
-        """
+        """Gets a playlist
+
         :arg playlist_id: The id of the playlist to get (Required)
         :return dict: The json returned by the request
         Gets the playlist from the id
@@ -436,7 +446,8 @@ class APIReq:
     @type_check
     def get_tracks_playlist(self, playlist_id: str, limit: int = None,
                             offset: int = None) -> dict:
-        """
+        """Gets a playlist's tracks
+
         :arg playlist_id: The id of the playlist to get (Required)
         :arg limit: The max number of tracks to get (max 100) (Optional)
         :arg offset: The index to start the tracks from (Optional)
@@ -455,8 +466,8 @@ class APIReq:
         args = (limit, offset)
 
         # Loop through arguments and add to dict if entered
-        for i in range(len(args)):
-            if args[i] is not None:
+        for i, arg in enumerate(args):
+            if arg is not None:
                 params.update({arg_names[i]: args[i]})
 
         # Create the request
@@ -472,7 +483,8 @@ class APIReq:
     @type_check
     def top_tracks(self, time_range: str = None, limit: int = None,
                    offset: int = None) -> dict:
-        """
+        """Gets top tracks
+
         :arg time_range: The time range to get the top tracks
                          for (long, medium or short _term) (Optional)
         :arg limit: The number of tracks to get (max 50) (Optional)
@@ -492,8 +504,8 @@ class APIReq:
         args = (time_range, limit, offset)
 
         # Loop through arguments and add to dict if entered
-        for i in range(len(args)):
-            if args[i] is not None:
+        for i, arg in enumerate(args):
+            if arg is not None:
                 params.update({arg_names[i]: args[i]})
 
         # Create the request and grab the returned json file
@@ -504,7 +516,8 @@ class APIReq:
     @type_check
     def top_artists(self, time_range: str = None,
                     limit: int = None, offset: int = None) -> dict:
-        """
+        """Gets top artists
+
         :arg time_range: The time range to get the top artists
                          for (long, medium or short _term) (Optional)
         :arg limit: The number of artists to get (max 50) (Optional)
@@ -524,8 +537,8 @@ class APIReq:
         args = (time_range, limit, offset)
 
         # Loop through arguments and add to dict if entered
-        for i in range(len(args)):
-            if args[i] is not None:
+        for i, arg in enumerate(args):
+            if arg is not None:
                 params.update({arg_names[i]: args[i]})
 
         # Create the request and grab the returned json file
@@ -536,7 +549,8 @@ class APIReq:
     @type_check
     def get_users_playlists(self, limit: int = None,
                             offset: int = None) -> dict:
-        """
+        """Gets user's playlists
+
         :arg limit: The number of playlists to get (max 50) (Optional)
         :arg offset: The index to start getting
                      the playlists at (Optional)
@@ -556,8 +570,8 @@ class APIReq:
         args = (limit, offset)
 
         # Loop through arguments and add to dict if entered
-        for i in range(len(args)):
-            if args[i] is not None:
+        for i, arg in enumerate(args):
+            if arg is not None:
                 params.update({arg_names[i]: args[i]})
 
         # Create the request and grab the returned json file
@@ -567,7 +581,8 @@ class APIReq:
 
     @type_check
     def genres_recommend(self) -> dict:
-        """
+        """Gets genres from seed
+
         :return dict: The dict containing the available genres
         Gets the available genre seeds from the api
         """
@@ -581,7 +596,8 @@ class APIReq:
 
     @type_check
     def get_tracks(self, id_list: list) -> dict:
-        """
+        """Gets tracks
+
         :arg id_list: A list of ids (max 50) (Required)
         :return dict: A dict containing the song items
         Gets the information about multiple tracks from a list of ids
@@ -602,7 +618,8 @@ class APIReq:
 
     @type_check
     def get_info_playback(self) -> dict:
-        """
+        """Gets user playback info
+
         :return dict: The info about the playback
         Grabs the information about a users playback from the api
         """
@@ -616,7 +633,8 @@ class APIReq:
 
     @type_check
     def add_track_playback(self, track_uri: str) -> str:
-        """
+        """Adds track to playback
+
         :arg track_uri: track uri to add to the user's playback (Required)
         :return str: Whether the request succeeded
         Adds a track to the current user's playback
@@ -641,7 +659,8 @@ class APIReq:
 
     @type_check
     def pause_playback(self) -> str:
-        """
+        """Pauses playback
+
         :return str: Returns the result of the request
         Pauses a user's playback
         """
@@ -663,7 +682,8 @@ class APIReq:
     @type_check
     def get_recommendations(self, limit: int = None, artists: list = None,
                             genres: list = None, tracks: list = None) -> dict:
-        """
+        """Gets recommendations
+
         :arg limit: The number of songs to return (max 100) (Optional)
         :arg artists: Artists for the seed (max 5) (Optional)
         :arg genres: Genres for the seed (max 5) (Optional)
@@ -686,8 +706,8 @@ class APIReq:
         args = (artists, genres, tracks)
 
         # Loop through arguments and add to dict if entered
-        for i in range(len(args)):
-            if args[i] is not None:
+        for i, arg in enumerate(args):
+            if arg is not None:
                 params.update({arg_names[i]: ",".join(args[i])})
 
         # Create the request and get the returned json
@@ -697,7 +717,8 @@ class APIReq:
 
     @type_check
     def get_user(self) -> dict:
-        """
+        """Gets user
+
         :return dict: Information about the user
         Gets information about the current user
         """
@@ -711,7 +732,8 @@ class APIReq:
 
     @type_check
     def get_artists(self, ids: list) -> dict:
-        """
+        """Gets artists
+
         :arg ids: A list of track ids (Required)
         :return dict: The dictionary with information about the artists
         Gets the artists corresponding to the ids
@@ -729,7 +751,8 @@ class APIReq:
 
     @type_check
     def get_artist_top(self, artist_id: str, country: str = "from_token") -> dict:
-        """
+        """Gets an artist's top tracks
+
         :arg artist_id: The id of the artist (Required)
         :arg country: The country market to get the top tracks  (Optional)
         :return dict: A dict containing the artist's top songs
@@ -745,7 +768,8 @@ class APIReq:
 
     @type_check
     def search(self, query: str, s_type: list, limit: int = None, offset: int = None) -> dict:
-        """
+        """Searched spotify
+
         :arg query: The query to search for (Required)
         :arg s_type: The type of thing to return (Required)
         :arg limit: The max number of objects to return (Optional)
@@ -769,7 +793,8 @@ class APIReq:
 
     @type_check
     def get_artist_albums(self, artist_id: str, limit: int = None, offset: int = None) -> dict:
-        """
+        """Gets an artists albums
+
         :arg artist_id: The id of the artist to get the albums of (Required)
         :arg limit: The max number of albums to return (Optional)
         :arg offset: The offset of the albums to return (Optional)
@@ -791,7 +816,8 @@ class APIReq:
 
     @type_check
     def get_albums(self, album_ids: list) -> dict:
-        """
+        """Gets albums
+
         :arg album_ids: A list of album ids to fetch (max 20) (Required)
         :return dict: A dict containing the album info
         Fetches info about the albums given by their ids
@@ -806,7 +832,8 @@ class APIReq:
 
     @type_check
     def replace_items(self, playlist_id: str, uris: list) -> dict:
-        """
+        """Replaces items
+
         :arg playlist_id: The playlist to replace the songs on
         :arg uris: The uris of the songs to replace
         :return dict: The dict containing the snapshot id
@@ -829,7 +856,8 @@ class APIReq:
 
 # Functions
 def encode_client(client_inst: OAuth) -> str:
-    """
+    """Encodes id and secret
+
     :arg client_inst: An instance of the OAuth class (Required)
     :return str: The base64 encoded string
     Encodes the client id and secret into base64 for use as Authorisation
@@ -850,7 +878,8 @@ def encode_client(client_inst: OAuth) -> str:
 # Function to save user data
 def save_data(user: str, auth_token: str, refresh_token: str,
               time_left: float, scope: str) -> None:
-    """
+    """Saves data
+
     :arg user: The user to save the data for (Required)
     :arg auth_token: The auth token for the user (Required)
     :arg refresh_token: The refresh token for the user (Required)
@@ -876,7 +905,8 @@ def save_data(user: str, auth_token: str, refresh_token: str,
 
 # Function to read user data
 def read_data(user: str) -> list:
-    """
+    """Reads data
+
     :arg user: The user whose data is going to be read (Required)
     :return list: A list containing the data about the user
     Reads the data from the user's file
@@ -891,7 +921,8 @@ def read_data(user: str) -> list:
 
 # Function to check user's data exists
 def check_user(user: str) -> bool:
-    """
+    """Checks if a user exists
+
     :arg user: The user to check the data for (Required)
     :return bool: Whether the user has data stored about them
     A function that checks through the stored files to check
@@ -913,7 +944,8 @@ def init(redirect_uri: str, user: str,
          scope: str = None, save_func: Callable = save_data,
          read_func: Callable = read_data, update_func: Callable = save_data,
          check_func: Callable = check_user) -> str:
-    """
+    """Function to set up user with an auth code
+
     :arg redirect_uri: The uri to redirect the user to when
                        making the request (Required)
     :arg user: For handling multiple users (Required)
